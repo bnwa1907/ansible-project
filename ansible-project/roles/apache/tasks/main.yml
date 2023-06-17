@@ -1,0 +1,35 @@
+---
+- name: install Apache
+  yum: 
+    name=httpd
+    state=installed
+
+- name: install PHP module for Apache
+  yum: 
+    name=php 
+    state=present
+
+- name: start Apache
+  systemd:
+    name=httpd
+    state=started
+    enabled=yes
+
+- name: permit traffic in default zone for https service
+  firewalld:
+    port: "{{ http_port }}"
+    permanent: yes
+    state: enabled
+  notify: 
+    -reload service firewalld
+
+- name: install PHP script
+  copy: 
+    src: "{{ php_page_src }}" 
+    dest: "{{ php_page_dest }}"
+    mode: 0664
+
+- name: test access
+  shell: touch /home/output.txt
+  shell: curl -I "192.168.127.130" 2>&1 | awk '/HTTP\// {print$2}' > /home/output.txt
+
